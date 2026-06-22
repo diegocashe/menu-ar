@@ -20,15 +20,17 @@ function generateNonce(): string {
     .replace(/=+$/, '');
 }
 
-// No external connections — all resources served from same origin only.
+// Resources served from same origin. MindAR + A-Frame require wasm, blob workers,
+// inline styles (A-Frame injects them), and camera access.
 function buildCSP(nonce: string): string {
   const directives = [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
-    `style-src 'self'`,
+    `script-src 'self' https://cdn.jsdelivr.net 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'`,
+    `style-src 'self' 'unsafe-inline'`,
     `font-src 'self'`,
-    `img-src 'self' data:`,
-    `connect-src 'self'`,
+    `img-src 'self' data: blob:`,
+    `connect-src 'self' blob:`,
+    `worker-src 'self' blob:`,
     `frame-ancestors 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
@@ -46,7 +48,7 @@ function applySecurityHeaders(headers: Headers, nonce: string): void {
   headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   headers.set(
     'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=()'
+    'camera=(self), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=()'
   );
   headers.delete('X-Powered-By');
   headers.delete('Server');

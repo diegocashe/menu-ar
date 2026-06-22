@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env
 .env.production
 
+# generated vendor files (ClamAV false-positive on WASM bundles)
+public/vendor/
+
 # macOS-specific files
 .DS_Store
 

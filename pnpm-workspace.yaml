@@ -1,3 +1,7 @@
 allowBuilds:
   esbuild: true
   sharp: true
+
+# aframe (all versions) depends on three-bmfont-text via git.
+# Trusted library — exception required for AR functionality.
+blockExoticSubdeps: false
