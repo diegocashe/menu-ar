@@ -16,13 +16,12 @@
     <link rel="icon" href="/favicon.ico" />
     <title>Menú AR</title>
 
-    <!-- Vendor scripts from jsDelivr CDN — loaded before body, is:inline skips Astro bundling -->
     <script src="https://cdn.jsdelivr.net/npm/aframe@1.7.1/dist/aframe-v1.7.1.min.js" is:inline></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" is:inline></script>
   </head>
 
   <body>
-    <!-- ── Permission gate (visible by default) ──────────────────────────── -->
+    <!-- ── Permission gate ───────────────────────────────────────────────── -->
     <div id="permission-gate" class="gate" aria-live="polite">
       <div class="gate__card">
         <div class="gate__icon" aria-hidden="true">🍔</div>
@@ -36,9 +35,7 @@
       </div>
     </div>
 
-    <!-- ── AR container ───────────────────────────────────────────────────── -->
-    <!-- NOT hidden — gate overlay sits above it (z-index:100).              -->
-    <!-- <a-scene> needs to init with real dimensions; hidden=0×0 breaks it. -->
+    <!-- ── AR scene ───────────────────────────────────────────────────────── -->
     <div id="ar-container" class="ar-container">
       <a-scene
         mindar-image="imageTargetSrc: /assets/targets.mind; autoStart: false; uiLoading: no; uiError: no; uiScanning: no"
@@ -59,7 +56,7 @@
         <a-entity mindar-image-target="targetIndex: 0">
           <a-gltf-model
             src="#hamburguesa"
-            position="0 0 0.3"
+            position="0 0 0.1"
             rotation="90 0 0"
             scale="0.5 0.5 0.5"
             animation-mixer
@@ -67,7 +64,6 @@
         </a-entity>
       </a-scene>
 
-      <!-- Scanning overlay shown while tracking ─────────────────────────── -->
       <div id="scan-overlay" class="scan-overlay">
         <div class="scan-overlay__frame"></div>
         <p class="scan-overlay__hint">Apunta al menú para ver tu plato en 3D</p>
@@ -77,7 +73,6 @@
 </html>
 
 <style>
-  /* ── Reset & base ─────────────────────────────────────────────────────── */
   :root {
     --color-bg: #0a0a0a;
     --color-surface: #1a1a1a;
@@ -91,16 +86,9 @@
     --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.6);
   }
 
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html,
-  body {
+  html, body {
     width: 100%;
     height: 100%;
     background: var(--color-bg);
@@ -110,7 +98,6 @@
     overflow: hidden;
   }
 
-  /* ── Permission gate ──────────────────────────────────────────────────── */
   .gate[hidden] { display: none; }
 
   .gate {
@@ -139,10 +126,7 @@
     text-align: center;
   }
 
-  .gate__icon {
-    font-size: clamp(3rem, 10vw, 4.5rem);
-    line-height: 1;
-  }
+  .gate__icon { font-size: clamp(3rem, 10vw, 4.5rem); line-height: 1; }
 
   .gate__title {
     font-size: clamp(1.5rem, 5vw, 2rem);
@@ -172,21 +156,10 @@
     touch-action: manipulation;
   }
 
-  .gate__btn:hover {
-    background: var(--color-accent-hover);
-  }
+  .gate__btn:hover { background: var(--color-accent-hover); }
+  .gate__btn:active { transform: scale(0.97); }
+  .gate--error .gate__btn { background: #555; cursor: not-allowed; }
 
-  .gate__btn:active {
-    transform: scale(0.97);
-  }
-
-  /* Error state */
-  .gate--error .gate__btn {
-    background: #555;
-    cursor: not-allowed;
-  }
-
-  /* ── AR container ─────────────────────────────────────────────────────── */
   .ar-container {
     position: fixed;
     inset: 0;
@@ -194,12 +167,6 @@
     height: 100vh;
   }
 
-  .ar-container a-scene {
-    width: 100%;
-    height: 100%;
-  }
-
-  /* ── Scan overlay ─────────────────────────────────────────────────────── */
   .scan-overlay {
     position: absolute;
     inset: 0;
@@ -236,16 +203,10 @@
     50%       { opacity: 0.4; }
   }
 
-  /* Hide scan overlay while target is tracked ────────────────────────── */
-  .scan-overlay--hidden {
-    display: none;
-  }
+  .scan-overlay--hidden { display: none; }
 </style>
 
 <script>
-  // All DOM interaction and AR logic runs client-side only.
-  // MindAR + A-Frame are loaded as global scripts via <script is:inline> in <head>.
-
   const gate        = document.getElementById('permission-gate') as HTMLDivElement;
   const gateMessage = document.getElementById('gate-message') as HTMLParagraphElement;
   const startBtn    = document.getElementById('start-ar-btn') as HTMLButtonElement;
@@ -255,60 +216,36 @@
   startBtn.addEventListener('click', async () => {
     startBtn.disabled = true;
     startBtn.textContent = 'Iniciando…';
-    console.log('[AR] button clicked');
 
     try {
-      console.log('[AR] requesting camera...');
       await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      console.log('[AR] camera granted');
 
       gate.setAttribute('hidden', '');
-      console.log('[AR] gate hidden');
 
       const scene = arContainer.querySelector('a-scene') as HTMLElement & {
         hasLoaded?: boolean;
-        systems?: Record<string, { start?: () => void; stop?: () => void }>;
+        systems?: Record<string, { start?: () => void }>;
       };
 
-      console.log('[AR] scene element:', scene);
-      console.log('[AR] scene.hasLoaded:', scene?.hasLoaded);
-      console.log('[AR] scene.systems keys:', scene?.systems ? Object.keys(scene.systems) : 'none');
-
       const startMindAR = (): void => {
-        const sys = scene.systems?.['mindar-image-system'];
-        console.log('[AR] mindar-image-system:', sys);
-        if (sys?.start) {
-          console.log('[AR] calling start()...');
-          sys.start();
-          console.log('[AR] start() called');
-        } else {
-          console.error('[AR] mindar-image-system or start() not found');
-        }
+        scene.systems?.['mindar-image-system']?.start?.();
       };
 
       if (scene.hasLoaded) {
-        console.log('[AR] scene already loaded — starting immediately');
         startMindAR();
       } else {
-        console.log('[AR] scene not loaded yet — waiting for loaded event');
-        scene.addEventListener('loaded', () => {
-          console.log('[AR] loaded event fired');
-          startMindAR();
-        }, { once: true });
+        scene.addEventListener('loaded', startMindAR, { once: true });
       }
 
       const target = arContainer.querySelector('[mindar-image-target]');
       target?.addEventListener('targetFound', () => {
-        console.log('[AR] target found');
         scanOverlay.classList.add('scan-overlay--hidden');
       });
       target?.addEventListener('targetLost', () => {
-        console.log('[AR] target lost');
         scanOverlay.classList.remove('scan-overlay--hidden');
       });
 
-    } catch (err) {
-      console.error('[AR] error:', err);
+    } catch {
       gate.classList.add('gate--error');
       gateMessage.textContent =
         'No se pudieron obtener los permisos de cámara. Por favor, revisa la configuración de tu navegador.';
