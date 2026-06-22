@@ -1,0 +1,84 @@
+---
+// SSG — fully prerendered
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Model Viewer — Menú AR</title>
+  </head>
+
+  <body>
+    <div class="placeholder">
+      <a href="/" class="back-btn" aria-label="Volver al inicio">‹ Volver</a>
+      <div class="placeholder__icon" aria-hidden="true">🔮</div>
+      <h1 class="placeholder__title">Model Viewer</h1>
+      <p class="placeholder__desc">Próximamente — visor 3D interactivo sin marcador</p>
+    </div>
+  </body>
+</html>
+
+<style>
+  :root {
+    --color-bg: #0a0a0a;
+    --color-surface: #1a1a1a;
+    --color-text: #f5f5f5;
+    --color-muted: rgba(255, 255, 255, 0.5);
+    --color-accent: #ff6b35;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    gap: 1rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .back-btn {
+    position: fixed;
+    top: max(1rem, env(safe-area-inset-top));
+    left: 1rem;
+    color: var(--color-accent);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .placeholder__icon { font-size: 4rem; line-height: 1; }
+
+  .placeholder__title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .placeholder__desc {
+    font-size: 0.9375rem;
+    color: var(--color-muted);
+  }
+</style>
